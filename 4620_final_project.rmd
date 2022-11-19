@@ -1,0 +1,102 @@
+---
+title: "4620 Project"
+author: "Jike Zhong"
+date: "11/19/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{R}
+library("glmnet")
+library(stringr)
+library(GGally)
+library("tidyr")
+library("dplyr")
+```
+
+#load data
+```{R}
+
+data_train <- read.csv("train.csv")
+data_test <- read.csv("test_new.csv")
+
+
+
+data_train <- data_train %>% mutate_if(is.numeric, ~replace_na(., 0))
+data_train <- data_train %>% mutate_if(is.character, ~replace_na(., "No"))
+
+data_test <- data_test %>% mutate_if(is.numeric, ~replace_na(., 0))
+data_test <- data_test %>% mutate_if(is.character, ~replace_na(., "No"))
+
+print(dim(data_train))
+print(dim(data_test))
+
+# str(data_train)
+#sapply(lapply(data_train, unique), length)
+```
+
+
+```{R}
+x_train <-  model.matrix(SalePrice~ . -1 , data = data_train)
+y_train <-  data_train$SalePrice
+
+x_test <-  model.matrix(SalePrice~ . -1 , data = data_test)
+y_test <-  data_test$SalePrice
+
+
+print(dim(x_train))
+print(dim(x_test))
+
+#x_train-x_test
+missing_cols = c()
+for (var in colnames(x_train)){
+  if (!(var %in% colnames(x_test))){
+    missing_cols <- c(missing_cols, var)
+  }
+}
+
+#x_test-x_train
+missing_cols_2 = c()
+for (var in colnames(x_test)){
+  if (!(var %in% colnames(x_train))){
+    missing_cols_2 <- c(missing_cols_2, var)
+  }
+}
+
+#we simply remove the mismatch to ensure the same distribution between train and test dataset
+x_train <- x_train[, !colnames(x_train) %in% missing_cols]
+x_test <- x_test[, !colnames(x_test) %in% missing_cols_2]
+```
+
+#lasso
+```{R}
+cv.lasso <-  cv.glmnet(x_train, y_train, type.measure = "mse", alpha = 1)
+#plot(cv.ridge)
+model =glmnet(x_train,y_train,lambda=cv.lasso$lambda.min, alpha=1)
+
+#lasso.bestlam =cv.lasso$lambda.min
+#tmp_coef = coef(cv.lasso,s=lasso.bestlam)
+#varnames = data.frame(name = tmp_coef@Dimnames[[1]][tmp_coef@i])
+#mylist = list(name = tmp_coef@Dimnames[[1]][tmp_coef@i])
+
+pred <- predict(model,x_test)
+mean((pred-y_test)^2)
+```
+
+#ridge
+```{R}
+cv.ridge <-  cv.glmnet(x_train, y_train, type.measure = "mse", alpha = 0)
+#plot(cv.ridge)
+model =glmnet(x_train,y_train,lambda=cv.ridge$lambda.min, alpha=0)
+pred <- predict(model,x_test)
+mean((pred-y_test)^2)
+```
+
+```{R}
+pls.fit=plsr(Apps~., data=train, scale=TRUE, validation="CV")
+pls.pred=predict(pls.fit, test, ncomp = 7)
+mean((pls.pred-test$Apps)^2)
+```
