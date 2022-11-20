@@ -38,7 +38,15 @@ print(dim(data_test))
 #sapply(lapply(data_train, unique), length)
 ```
 
+#Motivation 
+Housing market is an important sector of the economy. Having an accurate prediction of housing price is of interest to the general public and the economic forecast. Conventional models for predictions include regression, decision trees, naive bayes, recurrent neural networks, etc. A good model should be able to generalize well to the test data, meaning that it should aim to capture the global minimum (in a strong convex optimization problem) without over-fitting or under-fitting, this means we need to take into account the bias-variance trade-off. Motivated by these insights, we propose using Lasso (L1 regularization) based logistic regression model for this particular task. Fitting a lasso-based regression model should ensure enough model capacity while minimizing the chance of over-fitting through regularization. It also has advantage over neural network given our limited amount of data samples. To find the best modeling strategy, we also test Ridge along with Lasso. 
+#Math
+#Assumption
+#Validation
+Here we explain one important step to the data augmentation. For fairness purposes, we need to ensure that our train and test distributions are the same (e.g. predictors existing in test data must also exist in train data). For this reason, we first compute the confusion matrix of both the train and test data, we then drop the features that are in the disjoint set of train and test sets. 
 
+#Result
+We evaluate our models by mean squared errorand our result shows that Lasso out-performs Ridge.
 ```{R}
 x_train <-  model.matrix(SalePrice~ . -1 , data = data_train)
 y_train <-  data_train$SalePrice
